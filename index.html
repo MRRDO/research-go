@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="robots" content="noindex">
+<title>Research Hub</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #000; color: #e8e8e8; font: 17px -apple-system, system-ui, sans-serif; }
+  main { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; text-align: center; }
+  p { max-width: 32em; line-height: 1.45; color: #a8a8a8; }
+  a { color: #fff; }
+</style>
+</head>
+<body>
+<main>
+  <p id="msg">Opening Research Hub...</p>
+</main>
+<script>
+// A fixed address for the Home Screen icon. The PC writes its current tunnel address to host.json in this repo whenever it changes.
+// The key travels only in the part after # in the icon's link: browsers never send that to any server, and it is not stored here.
+(async () => {
+  const msg = document.getElementById('msg')
+  const key = decodeURIComponent(location.hash.slice(1))
+  if (!key) { msg.textContent = 'This link is missing its key. Open Research Hub from the Home Screen icon the profile installed.'; return }
+  const sources = [
+    'https://api.github.com/repos/MRRDO/research-go/contents/host.json?ref=main',   // always fresh
+    'host.json?t=' + Date.now(),                                                         // Pages copy (can lag a few minutes)
+  ]
+  for (const src of sources) {
+    try {
+      const r = await fetch(src, { cache: 'no-store', headers: src.startsWith('https://api.github.com') ? { Accept: 'application/vnd.github.raw+json' } : {} })
+      if (!r.ok) continue
+      const j = await r.json()
+      if (j && /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(j.url || '')) { location.replace(j.url + '/?key=' + encodeURIComponent(key)); return }
+    } catch (e) { }
+  }
+  msg.textContent = 'Research Hub is not reachable right now (the PC may be off or restarting). Try again in a minute.'
+})()
+</script>
+</body>
+</html>
